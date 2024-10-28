@@ -3,6 +3,7 @@
 import React from "react";
 import uuid from "react-uuid";
 import { useRouter } from "next/navigation";
+import toast, { Toaster } from 'react-hot-toast';
 
 // Temporary interface to represent the invitation
 // We will integrate it with the database later
@@ -31,25 +32,26 @@ export default function Page() {
       guestNumber,
     };
 
-    try {
-      const response = await fetch("/api/send", {
+    toast.promise(
+      fetch("/api/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(invitation),
-      });
+      }).then(async (response) => {
+        if (!response.ok) throw new Error("Failed to send the invitation");
 
-      if (response.ok) {
         const data = await response.json();
         console.log(data.message);
         router.push(`/invitation/${uid}`);
-      } else {
-        console.error("Failed to send the invitation");
+      }),
+      {
+        loading: "Sending invitation...",
+        success: "Invitation sent successfully!",
+        error: "Failed to send the invitation",
       }
-    } catch (error) {
-      console.error(error);
-    }
+    );
   };
 
   return (
@@ -100,6 +102,7 @@ export default function Page() {
           </button>
         </div>
       </form>
+      <Toaster position="top-center" />
     </div>
   );
 }
