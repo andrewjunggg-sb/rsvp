@@ -8,6 +8,9 @@ export async function POST(req: NextRequest) {
   try {
     const { id, name, email, guestNumber } = await req.json();
 
+    // Pick the first word from the right side of the name as last name, the remaining as first name
+    const [firstName, lastName] = name.split(' ').reverse();
+
     // Create the email content using the template
     const emailHtml = EmailTemplate({
         recipientName: name, 
@@ -18,14 +21,19 @@ export async function POST(req: NextRequest) {
         url: `localhost:3000/invitation/${id}`,
     });
 
+    // Create a new domain
+    resend.domains.create({ name: 'betterattendance.com' });
+
+    // Send the email
     const { data, error } = await resend.emails.send({
-      from: 'Event Team <onboarding@resend.dev>',
+      from: 'noreply@betterattendance.com', // Replace with your verified domain email
       to: email,
       subject: 'You are invited!',
-      react: emailHtml,
+      react: emailHtml, // If EmailTemplate returns React JSX, adjust this accordingly
     });
 
     if (error) {
+      console.error(error);
       return NextResponse.json({ error }, { status: 500 });
     }
 
